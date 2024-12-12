@@ -13,4 +13,4 @@
 11. **Logs**: Treat logs as event streams, capturing them centrally for analysis and debugging.  
 12. **Admin Processes**: Run administrative tasks (e.g., migrations) as one-off processes, executed in the same environment as the app.
 
-For more detailed information, visit [12factor.net](https://12factor.net/).
+For more detailed information, visit [12factor.net](https://12factor.net/).[12factorGFG](https://www.geeksforgeeks.org/what-is-twelve-factor-app/)
