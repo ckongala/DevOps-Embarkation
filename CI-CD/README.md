@@ -31,6 +31,8 @@
    - **Example (Amazon)**: ECR provides an easily accessible container registry for Amazon services to pull from.
 
 ---
+![image](https://github.com/user-attachments/assets/a4f3fd49-9526-4866-8abc-780114fe08fa)
+
 
 ### **Continuous Deployment (CD)**
 
