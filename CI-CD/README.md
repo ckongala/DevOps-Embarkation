@@ -38,6 +38,9 @@ developer push changes to feature branch, jenkins going to trigger CI
 
 
 ### **Continuous Deployment (CD)**
+```
+Simply runnig the docker image within EC2 Instance and then integration testing to check application is accessible and endpoinnts are reachable, once this done now create a pull request, so that it can be merged into main.
+```
 
 1. **Run Image in AWS EC2 (or other infrastructure)**:
    - **EC2** instances (or alternatives like **Google Cloud Compute Engine**, **Azure VM**) are used to host and run the Docker container image.
@@ -48,7 +51,9 @@ developer push changes to feature branch, jenkins going to trigger CI
    - **Example (Uber)**: They perform integration tests after deploying the code to ensure that the various microservices interact correctly.
 
 ---
-
+```
+so when pull request is raised Continuous Devivey Process start
+```
 ### **Continuous Delivery (CD)**
 
 When a **pull request** is raised, the **Continuous Delivery** pipeline kicks in:
