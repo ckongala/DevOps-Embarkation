@@ -23,34 +23,34 @@ This guide provides a step-by-step process for installing, configuring, and runn
 1. Create a new user and group named `promet`:
    ```bash
    sudo useradd --no-create-home --shell /bin/false promet
+
+   Note: Remember, for simplicity i consider User and Group as "promet" (throught the page)
+   ex:
+      uid=1007(promet) gid=1008(promet) groups=1008(promet)
    ```
 
-### 3. Move Prometheus Files to Appropriate Directories
+### 3. Move Prometheus Files to Appropriate Directories &  Set Permissions for Prometheus Directories and Files
 1. Create necessary directories:
    ```bash
    sudo mkdir -p /etc/prometheus /var/lib/prometheus
+   sudo chown promet:promet /etc/prometheus/
+   sudo chown promet:promet /var/lib/prometheus/
    ```
 2. Copy Prometheus binaries to `/usr/local/bin/`:
    ```bash
    sudo cp prometheus /usr/local/bin/
    sudo cp promtool /usr/local/bin/
+   sudo chown promet:promet /usr/local/bin/prometheus
+   sudo chown promet:promet /usr/local/bin/promtool
    ```
 3. Copy configuration files:
    ```bash
    sudo cp -r consoles /etc/prometheus/
+   sudo chown -R promet:promet /etc/prometheus/consoles/
    sudo cp -r console_libraries /etc/prometheus/
+   sudo chown -R promet:promet /etc/prometheus/console_libraries/
    sudo cp prometheus.yml /etc/prometheus/
-   ```
-
-### 4. Set Permissions for Prometheus Directories and Files
-1. Change ownership to the `promet` user and group:
-   ```bash
-   sudo chown -R promet:promet /etc/prometheus
-   sudo chown -R promet:promet /var/lib/prometheus
-   ```
-2. Adjust permissions:
-   ```bash
-   sudo chmod 644 /etc/prometheus/prometheus.yml
+   sudo chown promet:promet /etc/prometheus/prometheus.yml
    ```
 
 ## Configuring Prometheus as a Systemd Service
@@ -105,5 +105,5 @@ This confirms that Prometheus is successfully set up and running as a systemd se
 
 ---
 
-By following these steps, you ensure that Prometheus is properly installed, configured, and runs in the background even after a system reboot. This setup is ideal for production environments where continuous monitoring is required.
+We ensure that Prometheus is properly installed, configured, and runs in the background even after a system reboot. This setup is ideal for production environments where continuous monitoring is required.
 
