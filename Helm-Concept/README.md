@@ -1,3 +1,954 @@
+<div align="center">
+
+# ⎈ Helm - The Kubernetes Package Manager
+
+### *Simplify, Share, and Manage Complex Kubernetes Applications*
+
+[![Helm](https://img.shields.io/badge/Helm-0F1689?style=for-the-badge&logo=helm&logoColor=white)](https://helm.sh)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io)
+[![CNCF](https://img.shields.io/badge/CNCF-Graduated-00ADD8?style=for-the-badge&logo=cncf&logoColor=white)](https://www.cncf.io/)
+
+---
+
+*Helm helps you manage Kubernetes applications — Helm Charts help you define, install, and upgrade even the most complex Kubernetes application.*
+
+</div>
+
+---
+
+## 📑 Table of Contents
+
+- [What is Helm?](#-what-is-helm)
+- [Why Use Helm?](#-why-use-helm)
+- [Helm 2 vs Helm 3](#-helm-2-vs-helm-3)
+- [Core Components](#-core-components)
+- [Chart Structure](#-chart-structure)
+- [Templating](#-templating)
+- [Chart Hooks](#-chart-hooks)
+- [Lifecycle Management](#-lifecycle-management)
+- [Packaging & Distribution](#-packaging--distribution)
+- [Commands Reference](#-commands-reference)
+
+---
+
+## 🎯 What is Helm?
+
+**Helm** is the package manager for Kubernetes. It helps ease deployment and lifecycle management of applications deployed on a Kubernetes cluster.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         WITHOUT HELM vs WITH HELM                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   WITHOUT HELM                           WITH HELM                         │
+│   ────────────                           ─────────                         │
+│                                                                             │
+│   📄 deployment.yaml                     $ helm install my-app ./chart     │
+│   📄 service.yaml                                                          │
+│   📄 configmap.yaml                      ┌─────────────────────────────┐   │
+│   📄 secret.yaml            ──────►      │  ✅ Single command          │   │
+│   📄 ingress.yaml                        │  ✅ All resources deployed  │   │
+│   📄 pvc.yaml                            │  ✅ Versioned releases      │   │
+│   📄 hpa.yaml                            │  ✅ Easy rollbacks          │   │
+│   ...                                    └─────────────────────────────┘   │
+│                                                                             │
+│   ❌ Manage each file separately         ✅ Manage as ONE package          │
+│   ❌ Manual dependency tracking          ✅ Automatic dependency mgmt      │
+│   ❌ No versioning                       ✅ Release versioning             │
+│   ❌ Complex rollbacks                   ✅ One-command rollback           │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Helm's Capabilities
+
+| Feature | Description |
+|:--------|:------------|
+| 📦 **Package Manager** | Install/uninstall applications with a single command |
+| 🔄 **Release Manager** | Upgrade and rollback applications easily |
+| 📝 **Templating** | Dynamic configuration with Go templates |
+| 🔗 **Dependency Management** | Manage chart dependencies automatically |
+| 🌐 **Repository Support** | Share and distribute charts via repositories |
+
+---
+
+## 💡 Why Use Helm?
+
+### The Problem
+
+Kubernetes is great at managing complex infrastructure, but applications can become very complicated:
+
+```
+A Simple Application Requires:
+├── Deployment
+├── Service
+├── ConfigMap
+├── Secret
+├── PersistentVolume
+├── PersistentVolumeClaim
+├── Ingress
+├── HorizontalPodAutoscaler
+└── ... and more
+```
+
+**Challenges without Helm:**
+- 📄 Separate YAML file for each object
+- 🔗 Manual connection management between objects
+- ✏️ Repetitive edits across multiple files
+- 🔄 Complex upgrade/rollback processes
+- 🚫 Kubernetes treats each object independently
+
+### The Solution
+
+**Helm treats your application as a single package:**
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              HELM ANALOGY                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   📱 Mobile Game Installation                ⎈ Helm Installation           │
+│   ─────────────────────────                  ──────────────────            │
+│                                                                             │
+│   Game consists of:                          App consists of:              │
+│   • Graphics                                 • Deployments                 │
+│   • Music                                    • Services                    │
+│   • Data files                               • ConfigMaps                  │
+│   • Config                                   • Secrets                     │
+│                                                                             │
+│   You don't install each                     You don't apply each          │
+│   component separately!                      YAML separately!              │
+│                                                                             │
+│   Just: "Install Game" ─────────────────►    Just: "helm install app"      │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Key Benefits
+
+- ✅ **Single command** to install entire application (even with thousands of objects)
+- ✅ **Automatic object creation** without managing individual YAML files
+- ✅ **Centralized configuration** via `values.yaml`
+- ✅ **Easy upgrades and rollbacks** with single commands
+- ✅ **Reusable charts** for consistent deployments
+
+---
+
+## 🔄 Helm 2 vs Helm 3
+
+### Architecture Comparison
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         HELM 2 ARCHITECTURE                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   ┌──────────────┐                    ┌──────────────────────────────────┐ │
+│   │  Helm CLI    │ ◄───────────────►  │         Kubernetes Cluster       │ │
+│   │  (Client)    │                    │  ┌────────────────────────────┐  │ │
+│   └──────────────┘                    │  │         TILLER             │  │ │
+│         │                             │  │    (Server Component)      │  │ │
+│         │                             │  │                            │  │ │
+│         └─────────────────────────────│──│  • God mode privileges     │  │ │
+│                                       │  │  • Security concerns       │  │ │
+│                                       │  │  • Single point of failure │  │ │
+│                                       │  └────────────────────────────┘  │ │
+│                                       └──────────────────────────────────┘ │
+│                                                                             │
+│   ❌ Requires Tiller in cluster                                            │
+│   ❌ Security vulnerabilities (Tiller had admin privileges)                │
+│   ❌ No native RBAC support                                                │
+│   ❌ 2-way merge (only compares revisions)                                 │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         HELM 3 ARCHITECTURE                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   ┌──────────────┐                    ┌──────────────────────────────────┐ │
+│   │  Helm CLI    │ ◄───────────────►  │         Kubernetes Cluster       │ │
+│   │  (Client)    │     Direct API     │                                  │ │
+│   └──────────────┘     Connection     │     No Tiller Required! ✅       │ │
+│         │                             │                                  │ │
+│         │                             │     Uses K8s RBAC directly       │ │
+│         └─────────────────────────────│     Secrets store release info   │ │
+│                                       │                                  │ │
+│                                       └──────────────────────────────────┘ │
+│                                                                             │
+│   ✅ No Tiller required                                                    │
+│   ✅ Native RBAC support (uses K8s permissions)                            │
+│   ✅ CRD support                                                           │
+│   ✅ 3-way strategic merge patch                                           │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Feature Comparison
+
+| Feature | Helm 2 | Helm 3 |
+|:--------|:-------|:-------|
+| **Tiller** | ❌ Required | ✅ Removed |
+| **RBAC** | ❌ Limited | ✅ Native K8s RBAC |
+| **CRD Support** | ❌ Limited | ✅ Full support |
+| **Merge Strategy** | 2-way merge | 3-way merge |
+| **Security** | ⚠️ Concerns | ✅ Improved |
+| **Release Storage** | ConfigMaps | Secrets |
+
+### 3-Way Strategic Merge Patch
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     2-WAY vs 3-WAY MERGE                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   HELM 2 (2-Way Merge)                 HELM 3 (3-Way Merge)                │
+│   ────────────────────                 ────────────────────                │
+│                                                                             │
+│   Compares:                            Compares:                           │
+│   • Previous revision                  • Previous revision                 │
+│   • New revision                       • New revision                      │
+│                                        • LIVE STATE ✅                     │
+│                                                                             │
+│   Problem Scenario:                    Solution:                           │
+│   ─────────────────                    ─────────                           │
+│   1. helm install (rev 1)              1. helm install (rev 1)             │
+│   2. Manual kubectl edit               2. Manual kubectl edit              │
+│   3. helm rollback                     3. helm rollback                    │
+│      │                                    │                                │
+│      └─► No change detected!              └─► Detects live state diff!     │
+│          (Only compares revisions)            Properly reverts changes     │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🧩 Core Components
+
+### Component Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          HELM COMPONENTS                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   ┌─────────────┐     install      ┌─────────────┐                         │
+│   │             │ ───────────────► │             │                         │
+│   │    CHART    │                  │   RELEASE   │ ──── Revision 1         │
+│   │             │                  │             │ ──── Revision 2         │
+│   └─────────────┘                  └─────────────┘ ──── Revision 3         │
+│         │                                │                                  │
+│         │                                │                                  │
+│         ▼                                ▼                                  │
+│   ┌─────────────┐                  ┌─────────────┐                         │
+│   │    REPO     │                  │  METADATA   │                         │
+│   │  (Storage)  │                  │ (K8s Secret)│                         │
+│   └─────────────┘                  └─────────────┘                         │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Detailed Components
+
+<table>
+<tr>
+<td width="50%">
+
+**📦 Charts**
+
+A chart is a collection of files containing all instructions Helm needs to create Kubernetes objects.
+
+```
+Chart = Package of K8s Resources
+├── Templates (YAML with Go templating)
+├── Values (Configuration)
+├── Metadata (Chart info)
+└── Dependencies (Sub-charts)
+```
+
+**Think of it as an instruction manual for Helm.**
+
+</td>
+<td width="50%">
+
+**🚀 Releases**
+
+A release is a single installation of an application using a Helm chart.
+
+```bash
+# Two releases from same chart
+helm install my-site-1 bitnami/wordpress
+helm install my-site-2 bitnami/wordpress
+
+# Each release:
+# • Has its own name
+# • Tracked independently
+# • Has its own revisions
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+**📝 Revisions**
+
+Each change creates a new revision (snapshot) of the release.
+
+```
+Release: my-wordpress
+├── Revision 1 (Initial install)
+├── Revision 2 (Upgrade replicas)
+├── Revision 3 (Update image)
+└── Revision 4 (Rollback to rev 2)
+```
+
+</td>
+<td>
+
+**🗄️ Repositories**
+
+Collections of charts available for download.
+
+| Repository | URL |
+|:-----------|:----|
+| Bitnami | `https://charts.bitnami.com/bitnami` |
+| Artifact Hub | `https://artifacthub.io` |
+
+```bash
+helm repo add bitnami https://...
+helm search repo wordpress
+```
+
+</td>
+</tr>
+</table>
+
+### values.yaml
+
+The central configuration file for customizing chart deployments:
+
+```yaml
+# values.yaml - Single source of configuration
+replicaCount: 3
+
+image:
+  repository: nginx
+  tag: "1.21"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+```
+
+---
+
+## 📁 Chart Structure
+
+### Standard Directory Layout
+
+```
+mychart/
+│
+├── 📄 Chart.yaml          # Chart metadata (name, version, description)
+├── 📄 Chart.lock          # Dependency lock file
+├── 📄 values.yaml         # Default configuration values
+├── 📄 values.schema.json  # JSON Schema for values validation
+├── 📄 LICENSE             # License information
+├── 📄 README.md           # Chart documentation
+├── 📄 .helmignore         # Patterns to ignore when packaging
+│
+├── 📁 templates/          # Template files
+│   ├── 📄 deployment.yaml
+│   ├── 📄 service.yaml
+│   ├── 📄 ingress.yaml
+│   ├── 📄 configmap.yaml
+│   ├── 📄 _helpers.tpl    # Template helpers (partial templates)
+│   ├── 📄 NOTES.txt       # Post-install instructions
+│   └── 📁 tests/          # Test files
+│       └── 📄 test-connection.yaml
+│
+├── 📁 charts/             # Dependency charts
+│   └── 📁 postgresql/
+│
+└── 📁 crds/               # Custom Resource Definitions
+```
+
+### Chart.yaml
+
+```yaml
+apiVersion: v2
+name: my-application
+description: A Helm chart for my application
+type: application
+version: 1.0.0        # Chart version
+appVersion: "2.3.1"   # Application version
+
+keywords:
+  - web
+  - application
+
+maintainers:
+  - name: Your Name
+    email: your@email.com
+
+dependencies:
+  - name: postgresql
+    version: "11.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+```
+
+---
+
+## 🔧 Templating
+
+### Basic Syntax
+
+```yaml
+# templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-deployment
+  labels:
+    app: {{ .Values.app.name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  template:
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.service.port }}
+```
+
+### Built-in Objects
+
+| Object | Description | Example |
+|:-------|:------------|:--------|
+| `.Values` | Values from values.yaml | `{{ .Values.replicaCount }}` |
+| `.Release` | Release information | `{{ .Release.Name }}` |
+| `.Chart` | Chart.yaml content | `{{ .Chart.Version }}` |
+| `.Files` | Access non-template files | `{{ .Files.Get "config.ini" }}` |
+| `.Capabilities` | K8s cluster info | `{{ .Capabilities.KubeVersion }}` |
+
+### Template Functions
+
+<table>
+<tr>
+<td width="50%">
+
+**Common Functions**
+
+```yaml
+# default - Set default value
+image: {{ .Values.image | default "nginx" }}
+
+# quote - Add quotes
+env: {{ .Values.env | quote }}
+
+# upper/lower - Case conversion
+name: {{ .Values.name | upper }}
+
+# replace - String replacement
+{{ .Values.name | replace "-" "_" }}
+
+# required - Fail if empty
+{{ required "Name is required" .Values.name }}
+```
+
+</td>
+<td width="50%">
+
+**Pipeline Chaining**
+
+```yaml
+# Chain multiple functions
+image: {{ .Values.image.repo | default "nginx" | quote }}
+
+# Complex pipeline
+labels:
+  app: {{ .Values.app | lower | replace " " "-" | trunc 63 }}
+
+# Indent for YAML formatting
+annotations:
+{{ .Values.annotations | toYaml | indent 4 }}
+```
+
+</td>
+</tr>
+</table>
+
+### Control Structures
+
+```yaml
+# Conditionals
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+# ... ingress definition
+{{- end }}
+
+# If-Else
+{{- if .Values.production }}
+replicas: 5
+{{- else }}
+replicas: 1
+{{- end }}
+```
+
+### With Blocks (Scope)
+
+```yaml
+# Instead of repeating .Values.app everywhere
+{{- with .Values.app }}
+metadata:
+  name: {{ .name }}
+  labels:
+    version: {{ .version }}
+    environment: {{ .env }}
+{{- end }}
+
+# Access root scope inside with block using $
+{{- with .Values.app }}
+  name: {{ .name }}
+  release: {{ $.Release.Name }}  # $ refers to root
+{{- end }}
+```
+
+### Range (Loops)
+
+```yaml
+# Loop through a list
+env:
+{{- range .Values.env }}
+  - name: {{ .name }}
+    value: {{ .value | quote }}
+{{- end }}
+
+# Loop with index
+{{- range $index, $region := .Values.regions }}
+  - region-{{ $index }}: {{ $region | quote }}
+{{- end }}
+```
+
+### Named Templates (_helpers.tpl)
+
+```yaml
+# _helpers.tpl - Reusable template snippets
+{{- define "mychart.labels" -}}
+app.kubernetes.io/name: {{ .Chart.Name }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/version: {{ .Chart.AppVersion }}
+{{- end -}}
+
+{{- define "mychart.selectorLabels" -}}
+app.kubernetes.io/name: {{ .Chart.Name }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end -}}
+```
+
+```yaml
+# Using in deployment.yaml
+metadata:
+  labels:
+    {{- include "mychart.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "mychart.selectorLabels" . | nindent 6 }}
+```
+
+> 💡 **Note:** Files starting with `_` are skipped when rendering K8s manifests but can contain helper templates.
+
+---
+
+## 🪝 Chart Hooks
+
+Hooks allow you to intervene at certain points in a release's lifecycle.
+
+### Hook Lifecycle
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          HELM HOOK LIFECYCLE                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   INSTALL                                                                   │
+│   ───────                                                                   │
+│   helm install ──► verify ──► render ──► pre-install ──► INSTALL ──► post-install
+│                                              │                    │         │
+│                                              ▼                    ▼         │
+│                                         [Run Jobs]           [Resources]    │
+│                                                                             │
+│   UPGRADE                                                                   │
+│   ───────                                                                   │
+│   helm upgrade ──► verify ──► render ──► pre-upgrade ──► UPGRADE ──► post-upgrade
+│                                              │                              │
+│                                              ▼                              │
+│                                         [DB Backup]                         │
+│                                                                             │
+│   DELETE                                                                    │
+│   ──────                                                                    │
+│   helm uninstall ──► pre-delete ──► DELETE ──► post-delete                 │
+│                          │                         │                        │
+│                          ▼                         ▼                        │
+│                     [Cleanup]               [Notifications]                 │
+│                                                                             │
+│   ROLLBACK                                                                  │
+│   ────────                                                                  │
+│   helm rollback ──► pre-rollback ──► ROLLBACK ──► post-rollback            │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Available Hooks
+
+| Hook | Description |
+|:-----|:------------|
+| `pre-install` | Runs before any resources are installed |
+| `post-install` | Runs after all resources are installed |
+| `pre-upgrade` | Runs before upgrade (e.g., backup database) |
+| `post-upgrade` | Runs after upgrade completes |
+| `pre-delete` | Runs before deletion (e.g., cleanup) |
+| `post-delete` | Runs after deletion |
+| `pre-rollback` | Runs before rollback |
+| `post-rollback` | Runs after rollback |
+| `test` | Runs when `helm test` is invoked |
+
+### Hook Example
+
+```yaml
+# templates/pre-upgrade-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-db-backup
+  annotations:
+    "helm.sh/hook": pre-upgrade           # Hook type
+    "helm.sh/hook-weight": "-5"           # Priority (lower = first)
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    spec:
+      containers:
+        - name: backup
+          image: backup-tool:latest
+          command: ["./backup.sh"]
+      restartPolicy: Never
+  backoffLimit: 1
+```
+
+### Hook Weights
+
+```yaml
+# Execute email notification first, then backup
+annotations:
+  "helm.sh/hook": pre-upgrade
+  "helm.sh/hook-weight": "-10"    # Runs first (email)
+
+annotations:
+  "helm.sh/hook": pre-upgrade
+  "helm.sh/hook-weight": "-5"     # Runs second (backup)
+```
+
+---
+
+## 🔄 Lifecycle Management
+
+### Release Lifecycle
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        RELEASE LIFECYCLE                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│                              ┌───────────┐                                  │
+│                              │  INSTALL  │                                  │
+│                              └─────┬─────┘                                  │
+│                                    │                                        │
+│                                    ▼                                        │
+│   ┌──────────┐              ┌───────────┐              ┌──────────┐        │
+│   │ ROLLBACK │ ◄─────────── │  RUNNING  │ ───────────► │ UPGRADE  │        │
+│   └──────────┘              └─────┬─────┘              └──────────┘        │
+│        │                          │                          │             │
+│        │                          │                          │             │
+│        └──────────────────────────┼──────────────────────────┘             │
+│                                   │                                         │
+│                                   ▼                                         │
+│                             ┌───────────┐                                   │
+│                             │ UNINSTALL │                                   │
+│                             └───────────┘                                   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Customizing Chart Parameters
+
+**Method 1: Using `--set` flag**
+```bash
+helm install my-app bitnami/nginx \
+  --set replicaCount=3 \
+  --set service.type=LoadBalancer \
+  --set image.tag=1.21
+```
+
+**Method 2: Using custom values file**
+```bash
+# Create custom-values.yaml
+helm install my-app bitnami/nginx \
+  --values custom-values.yaml
+```
+
+**Method 3: Pull, modify, install**
+```bash
+# 1. Pull chart
+helm pull bitnami/nginx --untar
+
+# 2. Edit values.yaml locally
+vim nginx/values.yaml
+
+# 3. Install from local path
+helm install my-app ./nginx
+```
+
+### Important Notes
+
+> ⚠️ **Rollback doesn't restore data!** When you rollback, only Kubernetes objects are reverted. Database data is NOT automatically backed up or restored. Use hooks for data backup!
+
+---
+
+## 📦 Packaging & Distribution
+
+### Packaging Charts
+
+```bash
+# Package a chart
+helm package ./mychart
+
+# Output: mychart-1.0.0.tgz
+
+# Package with specific version
+helm package ./mychart --version 2.0.0
+
+# Package to specific directory
+helm package ./mychart --destination ./releases
+```
+
+### Chart Signing (Provenance)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          CHART SIGNING FLOW                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   Developer                                        Consumer                 │
+│   ─────────                                        ────────                 │
+│                                                                             │
+│   ┌─────────────┐                                  ┌─────────────┐         │
+│   │ Private Key │                                  │ Public Key  │         │
+│   └──────┬──────┘                                  └──────┬──────┘         │
+│          │                                                │                 │
+│          ▼                                                ▼                 │
+│   ┌─────────────┐     Upload      ┌──────────┐    ┌─────────────┐         │
+│   │   Sign      │ ──────────────► │   Repo   │ ──►│   Verify    │         │
+│   │   Chart     │                 │          │    │   Chart     │         │
+│   └─────────────┘                 └──────────┘    └─────────────┘         │
+│          │                                                │                 │
+│          ▼                                                ▼                 │
+│   mychart-1.0.0.tgz                              ✅ Verified & Trusted     │
+│   mychart-1.0.0.tgz.prov                                                   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+```bash
+# Sign a chart
+helm package --sign --key 'mykey' --keyring ~/.gnupg/pubring.gpg ./mychart
+
+# Verify a chart
+helm verify mychart-1.0.0.tgz
+```
+
+---
+
+## 📋 Commands Reference
+
+### Repository Commands
+
+```bash
+# Add a repository
+helm repo add bitnami https://charts.bitnami.com/bitnami
+
+# List repositories
+helm repo list
+
+# Update repository cache
+helm repo update
+
+# Remove repository
+helm repo remove bitnami
+
+# Search in repos
+helm search repo wordpress
+
+# Search in Artifact Hub
+helm search hub wordpress
+```
+
+### Installation Commands
+
+```bash
+# Install chart from repo
+helm install my-release bitnami/nginx
+
+# Install with custom values
+helm install my-release bitnami/nginx --values custom.yaml
+
+# Install with --set
+helm install my-release bitnami/nginx --set replicaCount=3
+
+# Install in specific namespace
+helm install my-release bitnami/nginx --namespace prod --create-namespace
+
+# Dry-run (preview without installing)
+helm install my-release bitnami/nginx --dry-run
+
+# Generate manifests only
+helm template my-release bitnami/nginx > manifests.yaml
+```
+
+### Management Commands
+
+```bash
+# List all releases
+helm list
+helm list --all-namespaces
+
+# Get release status
+helm status my-release
+
+# Get release history
+helm history my-release
+
+# Get values of a release
+helm get values my-release
+helm get values my-release --all      # Include defaults
+
+# Get manifests of a release
+helm get manifest my-release
+```
+
+### Upgrade & Rollback
+
+```bash
+# Upgrade release
+helm upgrade my-release bitnami/nginx
+
+# Upgrade with new values
+helm upgrade my-release bitnami/nginx --values new-values.yaml
+
+# Upgrade or install if not exists
+helm upgrade --install my-release bitnami/nginx
+
+# Rollback to previous revision
+helm rollback my-release
+
+# Rollback to specific revision
+helm rollback my-release 2
+```
+
+### Cleanup Commands
+
+```bash
+# Uninstall release
+helm uninstall my-release
+
+# Uninstall and keep history
+helm uninstall my-release --keep-history
+```
+
+### Development Commands
+
+```bash
+# Create new chart
+helm create mychart
+
+# Lint chart
+helm lint ./mychart
+
+# Package chart
+helm package ./mychart
+
+# Pull chart
+helm pull bitnami/nginx
+helm pull bitnami/nginx --untar
+
+# Show chart info
+helm show chart bitnami/nginx
+helm show values bitnami/nginx
+helm show readme bitnami/nginx
+```
+
+### Quick Reference Table
+
+| Command | Description |
+|:--------|:------------|
+| `helm version` | Show Helm version |
+| `helm help` | Get help |
+| `helm repo add` | Add chart repository |
+| `helm repo update` | Update repository cache |
+| `helm search repo` | Search in repositories |
+| `helm install` | Install a chart |
+| `helm upgrade` | Upgrade a release |
+| `helm rollback` | Rollback to previous revision |
+| `helm list` | List releases |
+| `helm history` | Show release history |
+| `helm uninstall` | Remove a release |
+| `helm create` | Create new chart |
+| `helm package` | Package chart for distribution |
+| `helm lint` | Validate chart |
+| `helm template` | Render templates locally |
+
+---
+
+## 📚 Additional Resources
+
+| Resource | Link |
+|:---------|:-----|
+| Helm Official Docs | [helm.sh/docs](https://helm.sh/docs/) |
+| Artifact Hub | [artifacthub.io](https://artifacthub.io/) |
+| Helm Charts Best Practices | [helm.sh/docs/chart_best_practices](https://helm.sh/docs/chart_best_practices/) |
+| Bitnami Charts | [github.com/bitnami/charts](https://github.com/bitnami/charts) |
+
+---
+
+<div align="center">
+
+## 🚀 Ready to Continue?
+
+**[← Back to Main](../README.md)** | **[Kubernetes →](../Kubernetes-Concept/README.md)** | **[Terraform →](../Terraform-Concept/README.md)**
+
+---
+
+*"Simplicity is the ultimate sophistication."* — Leonardo da Vinci
+
+</div>
+
+
+` Personal Note: `
 ```
 :::HELM:::
 	Helps ease deployment and lifecycle managment of application deployed on a Kubernetes cluster.
